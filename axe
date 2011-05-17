@@ -1,0 +1,50 @@
+#!/usr/bin/ruby
+
+watch, cmd = [], []
+
+target = watch
+ARGV.each do
+  |arg|
+  next target = cmd if watch == target and arg == '-'
+  target << arg
+end
+
+if target == watch
+  watch, cmd = [target.first], target[1..-1]
+end
+
+if watch.empty? or !cmd or cmd.empty?
+  abort <<"EOT"
+Usage: #{File.basename($0)} <FILE_1> <FILE_2> ... <FILE_N> - <COMMAND>
+       or
+       #{File.basename($0)} <FILE> <COMMAND>
+EOT
+end
+
+watch.each do
+  |filename|
+  next if File.exist?(filename)
+  abort "File not found: #{filename}"
+end
+
+cmd = cmd.join(' ')
+
+puts <<-"EOM"
+==================================================
+watch:   #{watch.join("\n         ")}
+command: #{cmd}
+==================================================
+EOM
+
+prev_times = watch.map {|w| File.mtime(w) }
+loop do
+  times = watch.map {|w| File.mtime(w) }
+  if times != prev_times
+    puts "[#{Time.new}]"
+    system(cmd)
+    puts '=================================================='
+    prev_times = times
+  end
+  sleep(0.5)
+end
+
