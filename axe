@@ -36,14 +36,15 @@ command: #{cmd}
 ==================================================
 EOM
 
-prev_times = watch.map {|w| File.mtime(w) }
+get_current_times = proc { watch.map {|w| File.mtime(w) } }
+prev_times = get_current_times[]
 loop do
-  times = watch.map {|w| File.mtime(w) }
+  times = get_current_times[]
   if times != prev_times
     puts "[#{Time.new}]"
     system(cmd)
     puts '=================================================='
-    prev_times = times
+    prev_times = get_current_times[]
   end
   sleep(0.5)
 end
