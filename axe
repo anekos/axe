@@ -1,55 +1,84 @@
 #!/usr/bin/ruby
 
-watch, cmd = [], []
+require 'shellwords'
+require 'rb-inotify'
+require 'pathname'
 
-target = watch
-ARGV.each do
-  |arg|
-  next target = cmd if watch == target and arg == '-'
-  target << arg
-end
 
-if target == watch
-  watch, cmd = [target.first], target[1..-1]
-end
-
-if watch.empty? or !cmd or cmd.empty?
-  abort <<"EOT"
-Usage: #{File.basename($0)} <FILE_1> <FILE_2> ... <FILE_N> - <COMMAND>
-       or
-       #{File.basename($0)} <FILE> <COMMAND>
-EOT
-end
-
-watch.each do
-  |filename|
-  next if File.exist?(filename)
-  abort "File not found: #{filename}"
-end
-
-cmd = cmd.join(' ')
-
-puts <<-"EOM"
-==================================================
-watch:   #{watch.join("\n         ")}
-command: #{cmd}
-==================================================
-EOM
-
-get_current_times = proc { watch.map {|w| File.mtime(w) } }
-prev_times = get_current_times[]
-loop do
-  begin
-    times = get_current_times[]
-    if times != prev_times
-      puts "[#{Time.new}]"
-      system(cmd)
-      puts '=================================================='
-      prev_times = get_current_times[]
-    end
-  rescue Errno::ENOENT
-    # DO NOTHING
+class Axe
+  def initialize (targets, command)
+    @targets = targets
+    @command = command
+    @last_executed = Time.new
+    banner
   end
-  sleep(0.5)
+
+  def run
+    notifier = INotify::Notifier.new
+    @targets.each do
+      |path|
+      path = Pathname(path)
+      abort "File not found: #{path}" unless path.exist?
+      flags = [:create, :delete, :modify, :attrib]
+      flags << :recursive if path.directory?
+      notifier.watch(path.to_s, *flags, &self.method(:execute_command))
+    end
+    notifier.run
+  end
+
+  private def banner
+    puts <<-"EOM"
+==================================================
+targets:   #{@targets.join("\n         ")}
+command: #{@command.join(' ')}
+==================================================
+    EOM
+  end
+
+  private def execute_command (e)
+    now = Time.new
+    return if (now - @last_executed) < 2
+    @last_executed = now
+    puts "[#{now}]"
+    system(@command.map(&:shellescape).join(' '))
+    puts '=================================================='
+  end
 end
 
+
+class AxeOption
+  attr_reader :targets, :command
+
+  def initialize (args)
+    watch, cmd = [], []
+
+    target = watch
+    args.each do
+      |arg|
+      next target = cmd if watch == target and arg == '-'
+      target << arg
+    end
+
+    if target == watch
+      watch, cmd = [target.first], target[1..-1]
+    end
+
+    if watch.empty? or !cmd or cmd.empty?
+      abort <<-"EOT"
+Usage: #{File.basename($0)} <DIRECTORY/FILE> <DIRECTORY/FILE> ... "-" <COMMAND>
+       or
+       #{File.basename($0)} <DIRECTORY/FILE> <COMMAND>
+    EOT
+    end
+
+    @targets = watch
+    @command = cmd
+  end
+end
+
+
+if __FILE__ == $0
+  option = AxeOption.new(ARGV)
+  axe = Axe.new(option.targets, option.command)
+  axe.run
+end
