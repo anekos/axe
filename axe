@@ -37,11 +37,11 @@ command: #{@command.join(' ')}
 
   private def execute_command (e)
     now = Time.new
-    return if (now - @last_executed) < 2
-    @last_executed = now
+    return if (now - @last_executed) < 1
     puts "[#{now}]"
     system(@command.map(&:shellescape).join(' '))
     puts '=================================================='
+    @last_executed = Time.new
   end
 end
 
