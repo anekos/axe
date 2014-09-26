@@ -21,9 +21,9 @@ class Axe
       abort "File not found: #{path}" unless path.exist?
       flags = [:create, :delete, :modify, :attrib]
       flags << :recursive if path.directory?
-      notifier.watch(path.to_s, *flags, &self.method(:execute_command))
+      notifier.watch(path.to_s, *flags, &self.method(:execute))
     end
-    execute_command(nil)
+    execute_command()
     notifier.run
   end
 
@@ -36,14 +36,18 @@ command: #{@command}
     EOM
   end
 
-  private def execute_command (_)
+  private def execute (_)
     now = Time.new
-    return if (now - @last_executed) < 1
+    return if @last_executed && (now - @last_executed) < 1
     sleep 0.2
     puts "[#{now}]"
+    execute_command
+    @last_executed = Time.new
+  end
+
+  private def execute_command ()
     system(@command)
     puts '=================================================='
-    @last_executed = Time.new
   end
 end
 
