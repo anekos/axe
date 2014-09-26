@@ -23,6 +23,7 @@ class Axe
       flags << :recursive if path.directory?
       notifier.watch(path.to_s, *flags, &self.method(:execute_command))
     end
+    execute_command(nil)
     notifier.run
   end
 
@@ -30,16 +31,17 @@ class Axe
     puts <<-"EOM"
 ==================================================
 targets:   #{@targets.join("\n         ")}
-command: #{@command.join(' ')}
+command: #{@command}
 ==================================================
     EOM
   end
 
-  private def execute_command (e)
+  private def execute_command (_)
     now = Time.new
     return if (now - @last_executed) < 1
+    sleep 0.2
     puts "[#{now}]"
-    system(@command.map(&:shellescape).join(' '))
+    system(@command)
     puts '=================================================='
     @last_executed = Time.new
   end
@@ -50,29 +52,37 @@ class AxeOption
   attr_reader :targets, :command
 
   def initialize (args)
-    watch, cmd = [], []
+    if args.last == '-'
+      @targets = args[0..-2]
+      @command = STDIN.read.chomp
+    elsif STDIN.tty?
+      watch, cmd = [], []
 
-    target = watch
-    args.each do
-      |arg|
-      next target = cmd if watch == target and arg == '-'
-      target << arg
+      target = watch
+      args.each do
+        |arg|
+        next target = cmd if watch == target and arg == '-'
+        target << arg
+      end
+
+      if target == watch
+        watch, cmd = [target.first], target[1..-1]
+      end
+
+      if watch.empty? or !cmd or cmd.empty?
+        abort <<-"EOT"
+  Usage: #{File.basename($0)} <DIRECTORY/FILE> <DIRECTORY/FILE> ... "-" <COMMAND>
+         or
+         #{File.basename($0)} <DIRECTORY/FILE> <COMMAND>
+      EOT
+      end
+
+      @targets = watch
+      @command = cmd.map(&:shellescape).join(' ')
+    else
+      @targets = args
+      @command = STDIN.read
     end
-
-    if target == watch
-      watch, cmd = [target.first], target[1..-1]
-    end
-
-    if watch.empty? or !cmd or cmd.empty?
-      abort <<-"EOT"
-Usage: #{File.basename($0)} <DIRECTORY/FILE> <DIRECTORY/FILE> ... "-" <COMMAND>
-       or
-       #{File.basename($0)} <DIRECTORY/FILE> <COMMAND>
-    EOT
-    end
-
-    @targets = watch
-    @command = cmd
   end
 end
 
