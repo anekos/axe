@@ -73,6 +73,8 @@ class AxeOption
         watch, cmd = [target.first], target[1..-1]
       end
 
+      cmd = watch if watch.size == 1 and cmd.empty?
+
       if watch.empty? or !cmd or cmd.empty?
         abort <<-"EOT"
   Usage: #{File.basename($0)} <DIRECTORY/FILE> <DIRECTORY/FILE> ... "-" <COMMAND>
