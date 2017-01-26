@@ -1,12 +1,13 @@
 
-extern crate inotify;
+extern crate ansi_term;
 extern crate chrono;
+extern crate inotify;
 
 
 mod notifier;
+mod display;
 
 
-use chrono::{Local, DateTime};
 use std::env::args;
 use std::time::{Duration, Instant};
 use std::sync::mpsc::channel;
@@ -39,41 +40,8 @@ fn parse_arguments(a: Vec<String>) -> (Vec<Target>, Vec<String>) {
 }
 
 
-fn puts_separator() {
-    let now: DateTime<Local> = Local::now();
-
-    let cols: usize =
-        String::from_utf8(
-            Command::new("tput").arg("cols").output().unwrap().stdout).unwrap()
-        .trim()
-        .parse().unwrap();
-
-    let mut buf = format!("# {} ", now.format("%H:%M:%S"));
-
-    for _ in 0..(cols - buf.len()) {
-        buf.push('#');
-    }
-
-    println!("[30;47;1m{}[0m", buf);
-}
-
-
-fn puts_time(t: Duration) {
-    let msec: u64 = t.as_secs() * 1000 + t.subsec_nanos() as u64 / 1000000;
-
-    if 60 * 1000 <= msec {
-        println!("{} min {} sec", msec / 60 / 1000, msec % (60 * 1000) / 1000)
-    } else {
-        println!("{} sec", msec as f64 / 1000.0);
-    }
-}
-
-
 fn main() {
     let (targets, command) = parse_arguments(args().collect());
-
-    // println!("targets: {:?}", targets);
-    // println!("command: {:?}", command);
 
     if let Some(program) = command.first() {
         let args: Vec<&String> = command.iter().skip(1).collect();
@@ -86,14 +54,14 @@ fn main() {
 
         loop {
             let _ = rx.recv();
-            puts_separator();
+            display::separator();
 
             let t = Instant::now();
 
             let mut child = Command::new(program).args(args.as_slice()).spawn().unwrap();
             child.wait().unwrap();
 
-            puts_time(t.elapsed());
+            display::time(t.elapsed());
 
             while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
             }
