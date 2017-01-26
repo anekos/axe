@@ -12,7 +12,7 @@ use std::env::args;
 use std::time::{Duration, Instant};
 use std::sync::mpsc::channel;
 use std::thread;
-use std::process::Command;
+use std::process::{Command, exit};
 use notifier::Target;
 
 
@@ -41,6 +41,12 @@ fn parse_arguments(a: Vec<String>) -> (Vec<Target>, Vec<String>) {
 
 
 fn main() {
+    if args().count() == 1 {
+        println!("Usage: axe <WATCH_TARGET> ... \"--\" <COMMAND_LINE> ...");
+        println!("       axe <WATCH_TARGET> <COMMAND_LINE> ...");
+        exit(1);
+    }
+
     let (targets, command) = parse_arguments(args().skip(1).collect());
 
     // println!("targets: {:?}", targets);
