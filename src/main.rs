@@ -41,7 +41,10 @@ fn parse_arguments(a: Vec<String>) -> (Vec<Target>, Vec<String>) {
 
 
 fn main() {
-    let (targets, command) = parse_arguments(args().collect());
+    let (targets, command) = parse_arguments(args().skip(1).collect());
+
+    // println!("targets: {:?}", targets);
+    // println!("command: {:?}", command);
 
     if let Some(program) = command.first() {
         let args: Vec<&String> = command.iter().skip(1).collect();
