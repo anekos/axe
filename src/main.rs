@@ -9,9 +9,11 @@ mod display;
 
 
 use std::env::args;
+use std::fs;
 use std::time::{Duration, Instant};
 use std::sync::mpsc::channel;
 use std::thread;
+use std::path::PathBuf;
 use std::process::{Command, exit};
 use notifier::Target;
 
@@ -47,7 +49,7 @@ fn main() {
         exit(1);
     }
 
-    let (targets, command) = parse_arguments(args().skip(1).collect());
+    let (targets, command) = parse_arguments(args().skip(1).map(to_absolute_path).collect());
 
     // println!("targets: {:?}", targets);
     // println!("command: {:?}", command);
@@ -62,7 +64,7 @@ fn main() {
         });
 
         loop {
-            let _ = rx.recv();
+            let _ = rx.recv().unwrap();
             display::separator();
 
             let t = Instant::now();
@@ -76,4 +78,10 @@ fn main() {
             }
         }
     };
+}
+
+
+fn to_absolute_path(path: String) -> String {
+    let buf = PathBuf::from(&path);
+    fs::canonicalize(buf).map(|it| it.to_str().unwrap().to_string()).unwrap_or(path.to_owned())
 }
