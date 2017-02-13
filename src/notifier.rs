@@ -7,7 +7,7 @@ use inotify::INotify;
 use inotify::ffi::*;
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Target {
     pub path: PathBuf,
     pub is_file: bool,
@@ -27,6 +27,10 @@ impl Target {
         } else {
             self.path.clone()
         }
+    }
+
+    pub fn exists(&self) -> bool {
+        self.path.exists()
     }
 }
 
