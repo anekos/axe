@@ -78,6 +78,8 @@ fn main() {
                     let _ = rx.recv().unwrap();
                     display::separator();
 
+                    thread::sleep(Duration::from_millis(100));
+
                     let t = Instant::now();
 
                     let mut child = Command::new(program).args(args.as_slice()).spawn().unwrap();
