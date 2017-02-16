@@ -19,6 +19,7 @@ use notifier::Target;
 
 
 const SEP: &'static str = "--";
+const PLACE_HOLDER: &'static str = "%";
 
 type Parsed = (Vec<Target>, Vec<String>);
 
@@ -30,7 +31,7 @@ fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
 
     let b = a.clone();
 
-    let (targets, command): Parsed = if a.iter().skip(1).any(sep) {
+    let (targets, mut command): Parsed = if a.iter().skip(1).any(sep) {
         (
             a.into_iter().take_while(nsep).map(target).collect(),
             b.into_iter().skip_while(nsep).skip(1).collect()
@@ -40,6 +41,17 @@ fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
             a.into_iter().take(1).map(target).collect(),
             b.into_iter().skip(1).collect()
         )
+    };
+
+    command = {
+        let first_target = targets.first().unwrap().path.to_str().unwrap();
+        command.into_iter().map(|it| {
+            if &it == PLACE_HOLDER {
+                first_target.to_owned()
+            } else {
+                it
+            }
+        }).collect()
     };
 
     if let Some(not_found) = targets.iter().cloned().find(|it| !it.exists()) {
