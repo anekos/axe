@@ -39,3 +39,8 @@ pub fn time(t: Duration) {
 }
 
 
+pub fn error(message: &str) {
+    let style = Style::new().bold().on(Red);
+
+    println!("{}", style.paint(message));
+}

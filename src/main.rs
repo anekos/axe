@@ -94,10 +94,13 @@ fn main() {
 
                     let t = Instant::now();
 
-                    let mut child = Command::new(program).args(args.as_slice()).spawn().unwrap();
-                    child.wait().unwrap();
-
-                    display::time(t.elapsed());
+                    match Command::new(program).args(args.as_slice()).spawn() {
+                        Ok(mut child) => {
+                            child.wait().unwrap();
+                            display::time(t.elapsed());
+                        },
+                        Err(err) => display::error(&format!("{}", err))
+                    }
 
                     while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
                     }
