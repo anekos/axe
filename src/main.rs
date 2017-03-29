@@ -30,8 +30,11 @@ fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
         let (lefts, rights) = a.split_at(at);
         (lefts.to_vec(), rights[1..].to_vec())
     } else if let Some((head, tail)) = a.split_first() {
-        (vec![head.to_owned()], tail.to_vec())
-
+        if tail.len() == 0 {
+            (vec![head.to_owned()], vec![head.to_owned()])
+        } else {
+            (vec![head.to_owned()], tail.to_vec())
+        }
     } else {
         return Err("Not enought arguments".to_owned())
     };
@@ -62,6 +65,7 @@ fn die(message: &str) {
 
     println!("Usage: axe <WATCH_TARGET> ... \"--\" <COMMAND_LINE> ...");
     println!("       axe <WATCH_TARGET> <COMMAND_LINE> ...");
+    println!("       axe <WATCH_TARGET_AND_COMMAND>");
     exit(1);
 }
 
