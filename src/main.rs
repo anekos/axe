@@ -26,39 +26,19 @@ type Parsed = (Vec<Target>, Vec<String>);
 
 fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
     fn sep(it: &String) -> bool { it == SEP }
-    fn nsep(it: &String) -> bool { it != SEP }
-    fn target(it: String) -> Target { Target::new(&it) }
+    fn target(it: &String) -> Target { Target::new(it) }
 
-    let b = a.clone();
+    let (targets, command) = if let Some(at) = a.iter().position(sep) {
+        let (lefts, rights) = a.split_at(at);
+        (lefts.to_vec(), rights.to_vec())
+    } else if let Some((head, tail)) = a.split_first() {
+        (vec![head.to_owned()], tail.to_vec())
 
-    let (targets, mut command): Parsed = if a.iter().skip(1).any(sep) {
-        (
-            a.into_iter().take_while(nsep).map(target).collect(),
-            b.into_iter().skip_while(nsep).skip(1).collect()
-        )
     } else {
-        (
-            a.into_iter().take(1).map(target).collect(),
-            b.into_iter().skip(1).collect()
-        )
+        return Err("Not enought arguments".to_owned())
     };
 
-    command = {
-        let first_target = targets.first().unwrap().path.to_str().unwrap();
-        command.into_iter().map(|it| {
-            if &it == PLACE_HOLDER {
-                first_target.to_owned()
-            } else {
-                it
-            }
-        }).collect()
-    };
-
-    if let Some(not_found) = targets.iter().cloned().find(|it| !it.exists()) {
-        Err(format!("Target does not exist: {}", not_found.path.to_str().unwrap()).to_string())
-    } else {
-        Ok((targets, command))
-    }
+    Ok((targets.iter().map(target).collect(), command))
 }
 
 
