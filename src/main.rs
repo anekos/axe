@@ -1,21 +1,19 @@
 
 extern crate ansi_term;
 extern crate chrono;
-extern crate inotify;
+extern crate patrol;
 
-
-mod notifier;
 mod display;
-
 
 use std::env::args;
 use std::fs;
 use std::time::{Duration, Instant};
 use std::sync::mpsc::channel;
 use std::thread;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, exit};
-use notifier::Target;
+use patrol::Target;
+
 
 
 const SEP: &'static str = "--";
@@ -28,15 +26,32 @@ fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
     fn sep(it: &String) -> bool { it == SEP }
     fn target(it: &String) -> Target { Target::new(it) }
 
-    let (targets, command) = if let Some(at) = a.iter().position(sep) {
+    let (targets, mut command) = if let Some(at) = a.iter().position(sep) {
         let (lefts, rights) = a.split_at(at);
-        (lefts.to_vec(), rights.to_vec())
+        (lefts.to_vec(), rights[1..].to_vec())
     } else if let Some((head, tail)) = a.split_first() {
         (vec![head.to_owned()], tail.to_vec())
 
     } else {
         return Err("Not enought arguments".to_owned())
     };
+
+    if let Some(first) = targets.first() {
+        for it in command.as_mut_slice().iter_mut() {
+            if *it == PLACE_HOLDER {
+                *it = first.clone()
+            }
+        }
+    }
+
+    // println!("targets: {:?}", targets);
+    // println!("command: {:?}", command);
+
+    for it in &targets {
+        if !Path::new(it).exists() {
+            return Err(format!("Target not found: {}", it));
+        }
+    }
 
     Ok((targets.iter().map(target).collect(), command))
 }
@@ -63,7 +78,7 @@ fn main() {
                 let (tx, rx) = channel();
 
                 thread::spawn(move || {
-                    notifier::start_to_watch(targets, tx);
+                    patrol::start(targets, tx);
                 });
 
                 loop {

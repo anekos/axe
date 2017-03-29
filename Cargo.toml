@@ -6,4 +6,4 @@ authors = ["anekos <anekos@snca.net>"]
 [dependencies]
 ansi_term = "*"
 chrono = "*"
-inotify = "*"
+patrol = "*"
