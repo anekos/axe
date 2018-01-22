@@ -21,7 +21,7 @@ pub fn separator() {
         buf.push('#');
     }
 
-    println!("{}", Style::new().bold().on(White).fg(Black).paint(buf));
+    eprintln!("{}", Style::new().bold().on(White).fg(Black).paint(buf));
 }
 
 
@@ -35,12 +35,12 @@ pub fn time(t: Duration) {
         } else {
             format!("{} sec", msec as f64 / 1000.0)
         };
-    println!("{}", style.paint(s));
+    eprintln!("{}", style.paint(s));
 }
 
 
 pub fn error(message: &str) {
     let style = Style::new().bold().on(Red);
 
-    println!("{}", style.paint(message));
+    eprintln!("{}", style.paint(message));
 }

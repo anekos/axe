@@ -61,11 +61,11 @@ fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
 
 
 fn die(message: &str) {
-    println!("{}\n", message);
+    eprintln!("{}\n", message);
 
-    println!("Usage: axe <WATCH_TARGET> ... \"--\" <COMMAND_LINE> ...");
-    println!("       axe <WATCH_TARGET> <COMMAND_LINE> ...");
-    println!("       axe <WATCH_TARGET_AND_COMMAND>");
+    eprintln!("Usage: axe <WATCH_TARGET> ... \"--\" <COMMAND_LINE> ...");
+    eprintln!("       axe <WATCH_TARGET> <COMMAND_LINE> ...");
+    eprintln!("       axe <WATCH_TARGET_AND_COMMAND>");
     exit(1);
 }
 
