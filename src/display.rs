@@ -1,9 +1,9 @@
 
-use ansi_term::Style;
-use ansi_term::Colour::{White, Black, Red};
-use chrono::{Local, DateTime};
-use std::time::Duration;
 use std::process::Command;
+use std::time::Duration;
+
+use chrono::{Local, DateTime};
+use deco::*;
 
 
 pub fn separator() {
@@ -21,13 +21,12 @@ pub fn separator() {
         buf.push('#');
     }
 
-    eprintln!("{}", Style::new().bold().on(White).fg(Black).paint(buf));
+    deprintln!([bold on_white black "{}"] buf);
 }
 
 
 pub fn time(t: Duration) {
     let msec: u64 = t.as_secs() * 1000 + t.subsec_nanos() as u64 / 1000000;
-    let style = Style::new().bold().fg(Red);
 
     let s =
         if 60 * 1000 <= msec {
@@ -35,12 +34,10 @@ pub fn time(t: Duration) {
         } else {
             format!("{} sec", msec as f64 / 1000.0)
         };
-    eprintln!("{}", style.paint(s));
+    deprintln!([bold red "{}"] s);
 }
 
 
 pub fn error(message: &str) {
-    let style = Style::new().bold().on(Red);
-
-    eprintln!("{}", style.paint(message));
+    deprintln!([bold red "{}"] message);
 }

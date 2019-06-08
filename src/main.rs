@@ -1,5 +1,4 @@
 
-extern crate ansi_term;
 extern crate chrono;
 extern crate patrol;
 
