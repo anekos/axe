@@ -4,6 +4,7 @@ extern crate chrono;
 extern crate patrol;
 
 mod display;
+mod errors;
 
 use std::env::args;
 use std::fs;
@@ -14,6 +15,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, exit};
 use patrol::Target;
 
+use errors::{AppError, AppResult};
+
 
 
 const SEP: &'static str = "--";
@@ -22,7 +25,7 @@ const PLACE_HOLDER: &'static str = "%";
 type Parsed = (Vec<Target>, Vec<String>);
 
 
-fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
+fn parse_arguments(a: Vec<String>) -> AppResult<Parsed> {
     fn sep(it: &String) -> bool { it == SEP }
     fn target(it: &String) -> Target { Target::new(it) }
 
@@ -36,7 +39,7 @@ fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
             (vec![head.to_owned()], tail.to_vec())
         }
     } else {
-        return Err("Not enought arguments".to_owned())
+        return Err(AppError::NotEnoughArguments)
     };
 
     if let Some(first) = targets.first() {
@@ -52,7 +55,7 @@ fn parse_arguments(a: Vec<String>) -> Result<Parsed, String> {
 
     for it in &targets {
         if !Path::new(it).exists() {
-            return Err(format!("Target not found: {}", it));
+            return Err(AppError::TargetNotFound(it.to_owned()));
         }
     }
 
@@ -73,7 +76,7 @@ fn die(message: &str) {
 fn main() {
     match parse_arguments(args().skip(1).map(to_absolute_path).collect()) {
         Err(err) => {
-            die(&format!("Error: {}", err))
+            die(&format!("{}", err))
         },
         Ok((targets, command)) => {
             if let Some(program) = command.first() {
