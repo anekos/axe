@@ -21,7 +21,7 @@ pub fn separator() {
         buf.push('#');
     }
 
-    deprintln!([bold on_white black "{}"] buf);
+    deprintln!([bold on_white black "{}" !] buf);
 }
 
 
@@ -40,4 +40,8 @@ pub fn time(t: Duration) {
 
 pub fn error(message: &str) {
     deprintln!([bold red "{}"] message);
+}
+
+pub fn killing(pid: u32) {
+    deprintln!([bold red "Killing {} !"] pid);
 }

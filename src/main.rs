@@ -7,11 +7,14 @@ mod errors;
 
 use std::env::args;
 use std::fs;
-use std::time::{Duration, Instant};
-use std::sync::mpsc::channel;
-use std::thread;
 use std::path::{Path, PathBuf};
 use std::process::{Command, exit};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::channel;
+use std::thread;
+use std::time::{Duration, Instant};
+
+use libc;
 use patrol::Target;
 
 use errors::{AppError, AppResult};
@@ -49,9 +52,6 @@ fn parse_arguments(a: Vec<String>) -> AppResult<Parsed> {
         }
     }
 
-    // println!("targets: {:?}", targets);
-    // println!("command: {:?}", command);
-
     for it in &targets {
         if !Path::new(it).exists() {
             return Err(AppError::TargetNotFound(it.to_owned()));
@@ -78,30 +78,48 @@ fn main() {
             die(&format!("{}", err))
         },
         Ok((targets, command)) => {
-            if let Some(program) = command.first() {
-                let args: Vec<&String> = command.iter().skip(1).collect();
-
+            if let Some((program, args)) = command.split_first() {
                 let (tx, rx) = channel();
 
                 thread::spawn(move || {
                     patrol::start(targets, tx);
                 });
 
+                let pid = Arc::new(Mutex::<Option<u32>>::new(None));
+
                 loop {
                     let _ = rx.recv().unwrap();
+
+                    if let Some(pid) = *pid.lock().unwrap() {
+                        display::killing(pid);
+                        unsafe {
+                            let mut status = 1;
+                            libc::kill(pid as i32, libc::SIGTERM);
+                            libc::waitpid(pid as i32, &mut status, 0);
+                        };
+                    }
+
                     display::separator();
 
                     thread::sleep(Duration::from_millis(100));
 
-                    let t = Instant::now();
+                    let (program, args) = (program.to_owned(), args.to_owned());
+                    let pid = pid.clone();
 
-                    match Command::new(program).args(args.as_slice()).spawn() {
-                        Ok(mut child) => {
-                            child.wait().unwrap();
-                            display::time(t.elapsed());
-                        },
-                        Err(err) => display::error(&format!("{}", err))
-                    }
+                    thread::spawn(move || {
+                        let t = Instant::now();
+                        match Command::new(program).args(args).spawn() {
+                            Ok(mut child) => {
+                                {
+                                    let mut pid = pid.lock().unwrap();
+                                    *pid = Some(child.id());
+                                }
+                                let _ = child.wait();
+                                display::time(t.elapsed());
+                            },
+                            Err(err) => display::error(&format!("{}", err))
+                        }
+                    });
 
                     while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
                     }
