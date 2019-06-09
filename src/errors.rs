@@ -4,7 +4,7 @@ use failure::Fail;
 
 
 pub type AppResult<T> = Result<T, AppError>;
-// pub type AppResultU = Result<(), AppError>;
+pub type AppResultU = Result<(), AppError>;
 
 
 

@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 use libc;
 use patrol::Target;
 
-use errors::{AppError, AppResult};
+use errors::{AppError, AppResult, AppResultU};
 
 
 
@@ -67,72 +67,66 @@ fn parse_arguments(a: Vec<String>) -> AppResult<Parsed> {
 }
 
 
-fn die(message: &str) {
-    eprintln!("{}\n", message);
+fn app() -> AppResultU {
+    let (targets, command) = parse_arguments(args().skip(1).map(to_absolute_path).collect())?;
 
-    eprintln!("Usage: axe <WATCH_TARGET> ... \"--\" <COMMAND_LINE> ...");
-    eprintln!("       axe <WATCH_TARGET> <COMMAND_LINE> ...");
-    eprintln!("       axe <WATCH_TARGET_AND_COMMAND>");
-    exit(1);
+    let (program, args) = command.split_first().ok_or(AppError::NotEnoughArguments)?;
+
+    let (tx, rx) = channel();
+
+    thread::spawn(move || {
+        patrol::start(targets, tx);
+    });
+
+    let pid = Arc::new(Mutex::<Option<u32>>::new(None));
+
+    loop {
+        let _ = rx.recv().unwrap();
+
+        if let Some(pid) = *pid.lock().unwrap() {
+            display::killing(pid);
+            unsafe {
+                let mut status = 1;
+                libc::kill(pid as i32, libc::SIGTERM);
+                libc::waitpid(pid as i32, &mut status, 0);
+            };
+        }
+
+        display::separator();
+
+        thread::sleep(Duration::from_millis(100));
+
+        let (program, args) = (program.to_owned(), args.to_owned());
+        let pid = pid.clone();
+
+        thread::spawn(move || {
+            let t = Instant::now();
+            match Command::new(program).args(args).spawn() {
+                Ok(mut child) => {
+                    {
+                        let mut pid = pid.lock().unwrap();
+                        *pid = Some(child.id());
+                    }
+                    let _ = child.wait();
+                    display::time(t.elapsed());
+                },
+                Err(err) => display::error(&format!("{}", err))
+            }
+        });
+
+        while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
+        }
+    }
 }
 
 
 fn main() {
-    match parse_arguments(args().skip(1).map(to_absolute_path).collect()) {
-        Err(err) => {
-            die(&format!("{}", err))
-        },
-        Ok((targets, command)) => {
-            if let Some((program, args)) = command.split_first() {
-                let (tx, rx) = channel();
-
-                thread::spawn(move || {
-                    patrol::start(targets, tx);
-                });
-
-                let pid = Arc::new(Mutex::<Option<u32>>::new(None));
-
-                loop {
-                    let _ = rx.recv().unwrap();
-
-                    if let Some(pid) = *pid.lock().unwrap() {
-                        display::killing(pid);
-                        unsafe {
-                            let mut status = 1;
-                            libc::kill(pid as i32, libc::SIGTERM);
-                            libc::waitpid(pid as i32, &mut status, 0);
-                        };
-                    }
-
-                    display::separator();
-
-                    thread::sleep(Duration::from_millis(100));
-
-                    let (program, args) = (program.to_owned(), args.to_owned());
-                    let pid = pid.clone();
-
-                    thread::spawn(move || {
-                        let t = Instant::now();
-                        match Command::new(program).args(args).spawn() {
-                            Ok(mut child) => {
-                                {
-                                    let mut pid = pid.lock().unwrap();
-                                    *pid = Some(child.id());
-                                }
-                                let _ = child.wait();
-                                display::time(t.elapsed());
-                            },
-                            Err(err) => display::error(&format!("{}", err))
-                        }
-                    });
-
-                    while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
-                    }
-                }
-            } else {
-                die("Error: Not enough arguments")
-            }
-        }
+    if let Err(err) = app() {
+        eprintln!("{}\n", err);
+        eprintln!("Usage: axe <WATCH_TARGET> ... \"--\" <COMMAND_LINE> ...");
+        eprintln!("       axe <WATCH_TARGET> <COMMAND_LINE> ...");
+        eprintln!("       axe <WATCH_TARGET_AND_COMMAND>");
+        exit(1);
     }
 }
 
