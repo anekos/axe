@@ -108,6 +108,10 @@ fn app() -> AppResultU {
                         *pid = Some(child.id());
                     }
                     let _ = child.wait();
+                    {
+                        let mut pid = pid.lock().unwrap();
+                        *pid = None;
+                    }
                     display::time(t.elapsed());
                 },
                 Err(err) => display::error(&format!("{}", err))
