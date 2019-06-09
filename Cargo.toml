@@ -10,3 +10,9 @@ deco = "0.2"
 failure = "*"
 libc = "*"
 patrol = "*"
+
+[dev-dependencies.cargo-husky]
+version = "1"
+default-features = false
+features = ["precommit-hook", "run-cargo-test", "run-cargo-clippy"]
+
