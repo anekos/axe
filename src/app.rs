@@ -31,7 +31,7 @@ pub fn start() -> AppResultU {
     loop {
         let _ = rx.recv().unwrap();
 
-        if let Some(pid) = *pid.lock().unwrap() {
+        if let Some(pid) = (*pid.lock().unwrap()).take() {
             display::killing(pid);
             unsafe {
                 let mut status = 1;
