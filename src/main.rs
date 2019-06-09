@@ -1,7 +1,4 @@
 
-extern crate chrono;
-extern crate patrol;
-
 mod display;
 mod errors;
 
@@ -9,8 +6,8 @@ use std::env::args;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, exit};
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -21,28 +18,36 @@ use errors::{AppError, AppResult};
 
 
 
-const SEP: &'static str = "--";
-const PLACE_HOLDER: &'static str = "%";
+const SEP: &str = "--";
+const PLACE_HOLDER: &str = "%";
 
 type Parsed = (Vec<Target>, Vec<String>);
 
 
-fn parse_arguments(a: Vec<String>) -> AppResult<Parsed> {
-    fn sep(it: &String) -> bool { it == SEP }
-    fn target(it: &String) -> Target { Target::new(it) }
+fn extract_params(a: Vec<String>) -> AppResult<(Vec<String>, Vec<String>)> {
+    fn sep(it: &str) -> bool { it == SEP }
 
-    let (targets, mut command) = if let Some(at) = a.iter().position(sep) {
+    if let Some(at) = a.iter().map(String::as_ref).position(sep) {
         let (lefts, rights) = a.split_at(at);
-        (lefts.to_vec(), rights[1..].to_vec())
-    } else if let Some((head, tail)) = a.split_first() {
-        if tail.len() == 0 {
+        return Ok((lefts.to_vec(), rights[1..].to_vec()));
+    }
+
+    if let Some((head, tail)) = a.split_first() {
+        return Ok(if tail.is_empty() {
             (vec![head.to_owned()], vec![head.to_owned()])
         } else {
             (vec![head.to_owned()], tail.to_vec())
-        }
-    } else {
-        return Err(AppError::NotEnoughArguments)
-    };
+        });
+    }
+
+    Err(AppError::NotEnoughArguments)
+}
+
+
+fn parse_arguments(a: Vec<String>) -> AppResult<Parsed> {
+    fn target(it: &str) -> Target { Target::new(it) }
+
+    let (targets, mut command) = extract_params(a)?;
 
     if let Some(first) = targets.first() {
         for it in command.as_mut_slice().iter_mut() {
@@ -58,7 +63,7 @@ fn parse_arguments(a: Vec<String>) -> AppResult<Parsed> {
         }
     }
 
-    Ok((targets.iter().map(target).collect(), command))
+    Ok((targets.iter().map(String::as_ref).map(target).collect(), command))
 }
 
 
@@ -134,5 +139,5 @@ fn main() {
 
 fn to_absolute_path(path: String) -> String {
     let buf = PathBuf::from(&path);
-    fs::canonicalize(buf).map(|it| it.to_str().unwrap().to_string()).unwrap_or(path.to_owned())
+    fs::canonicalize(buf).map(|it| it.to_str().unwrap().to_string()).unwrap_or_else(|_| path.to_owned())
 }

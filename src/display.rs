@@ -26,7 +26,7 @@ pub fn separator() {
 
 
 pub fn time(t: Duration) {
-    let msec: u64 = t.as_secs() * 1000 + t.subsec_nanos() as u64 / 1000000;
+    let msec: u64 = t.as_secs() * 1000 + u64::from(t.subsec_nanos()) / 1_000_000;
 
     let s =
         if 60 * 1000 <= msec {
