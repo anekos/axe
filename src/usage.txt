@@ -1,0 +1,10 @@
+Usage: axe <WATCH_TARGET> ... "--" <COMMAND_LINE> ...
+       axe <WATCH_TARGET> <COMMAND_LINE> ...
+       axe <WATCH_TARGET_AND_COMMAND>
+
+Placeholder:
+  You can use `%` as the same as the first argument in <COMMAND_LINE>.
+  e.g)
+    axe app.py lib.py -- python3 app.py
+    ↓
+    axe app.py lib.py -- python3 %

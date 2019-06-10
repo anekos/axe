@@ -8,13 +8,12 @@ mod errors;
 mod types;
 
 
+const USAGE: &str = include_str!("usage.txt");
 
 fn main() {
     if let Err(err) = app::start() {
         eprintln!("{}\n", err);
-        eprintln!("Usage: axe <WATCH_TARGET> ... \"--\" <COMMAND_LINE> ...");
-        eprintln!("       axe <WATCH_TARGET> <COMMAND_LINE> ...");
-        eprintln!("       axe <WATCH_TARGET_AND_COMMAND>");
+        eprint!("{}", USAGE);
         exit(1);
     }
 }
