@@ -29,8 +29,6 @@ pub fn start() -> AppResultU {
     let pid = Arc::new(Mutex::<Option<u32>>::new(None));
 
     loop {
-        let _ = rx.recv().unwrap();
-
         if let Some(pid) = (*pid.lock().unwrap()).take() {
             display::killing(pid);
             unsafe {
@@ -68,6 +66,8 @@ pub fn start() -> AppResultU {
 
         while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
         }
+
+        let _ = rx.recv().unwrap();
     }
 }
 
