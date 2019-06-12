@@ -41,26 +41,37 @@ pub fn start() -> AppResultU {
         thread::sleep(Duration::from_millis(100));
 
         let (program, args) = (program.to_owned(), args.to_owned());
-        let pid = pid.clone();
 
-        thread::spawn(move || {
-            let t = Instant::now();
-            match Command::new(program).args(args).spawn() {
+        let t = Instant::now();
+
+        if app_options.sync {
+            match Command::new(program).args(args.as_slice()).spawn() {
                 Ok(mut child) => {
-                    {
-                        let mut pid = pid.lock().unwrap();
-                        *pid = Some(child.id());
-                    }
-                    let _ = child.wait();
-                    {
-                        let mut pid = pid.lock().unwrap();
-                        *pid = None;
-                    }
+                    child.wait().unwrap();
                     display::time(t.elapsed());
                 },
                 Err(err) => display::error(&format!("{}", err))
             }
-        });
+        } else {
+            let pid = pid.clone();
+            thread::spawn(move || {
+                match Command::new(program).args(args).spawn() {
+                    Ok(mut child) => {
+                        {
+                            let mut pid = pid.lock().unwrap();
+                            *pid = Some(child.id());
+                        }
+                        let _ = child.wait();
+                        display::time(t.elapsed());
+                        {
+                            let mut pid = pid.lock().unwrap();
+                            *pid = None;
+                        }
+                    },
+                    Err(err) => display::error(&format!("{}", err))
+                }
+            });
+        }
 
         while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
         }

@@ -18,12 +18,14 @@ const PLACE_HOLDER: &str = "%";
 pub fn parse() -> AppResult<AppOption> {
     let mut target_command: Vec<String> = vec![];
     let mut signal = libc::SIGTERM;
+    let mut sync = false;
 
     {
-        use argparse::{ArgumentParser, Collect, StoreConst};
+        use argparse::{ArgumentParser, Collect, StoreConst, StoreTrue};
         let mut ap = ArgumentParser::new();
         ap.silence_double_dash(false);
         ap.refer(&mut signal).add_option(&["--kill", "-k"], StoreConst(libc::SIGKILL), "Use KILL signal");
+        ap.refer(&mut sync).add_option(&["--sync", "-s"], StoreTrue, "Do not use signal");
         ap.refer(&mut target_command).add_argument("Target/Command", Collect, "Target or command");
         let args = env::args().collect();
         ap.parse(args, &mut sink(), &mut sink()).map_err(|_| AppError::InvalidArgument)?;
@@ -51,6 +53,7 @@ pub fn parse() -> AppResult<AppOption> {
     Ok(AppOption {
         command_line,
         signal,
+        sync,
         targets: targets.iter().map(String::as_ref).map(target).collect(),
     })
 }
