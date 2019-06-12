@@ -10,6 +10,8 @@ pub type AppResultU = Result<(), AppError>;
 
 #[derive(Fail, Debug)]
 pub enum AppError {
+    #[fail(display = "Invalid argument")]
+    InvalidArgument,
     #[fail(display = "IO Error: {}", 0)]
     Io(std::io::Error),
     #[fail(display = "Not enough arguments")]

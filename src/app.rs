@@ -1,6 +1,3 @@
-use std::env;
-use std::fs;
-use std::path::PathBuf;
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
@@ -16,12 +13,13 @@ use crate::errors::{AppError, AppResultU};
 
 
 pub fn start() -> AppResultU {
-    let (targets, command) = args::parse(env::args().skip(1).map(to_absolute_path).collect())?;
+    let app_options = args::parse()?;
 
-    let (program, args) = command.split_first().ok_or(AppError::NotEnoughArguments)?;
+    let (program, args) = app_options.command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
 
     let (tx, rx) = channel();
 
+    let targets = app_options.targets;
     thread::spawn(move || {
         patrol::start(targets, tx);
     });
@@ -33,7 +31,7 @@ pub fn start() -> AppResultU {
             display::killing(pid);
             unsafe {
                 let mut status = 1;
-                libc::kill(pid as i32, libc::SIGTERM);
+                libc::kill(pid as i32, app_options.signal);
                 libc::waitpid(pid as i32, &mut status, 0);
             };
         }
@@ -69,9 +67,4 @@ pub fn start() -> AppResultU {
 
         let _ = rx.recv().unwrap();
     }
-}
-
-fn to_absolute_path(path: String) -> String {
-    let buf = PathBuf::from(&path);
-    fs::canonicalize(buf).map(|it| it.to_str().unwrap().to_string()).unwrap_or_else(|_| path.to_owned())
 }

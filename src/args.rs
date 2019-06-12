@@ -1,5 +1,8 @@
 
-use std::path::{Path};
+use std::env;
+use std::fs;
+use std::io::sink;
+use std::path::{Path, PathBuf};
 
 use patrol::Target;
 
@@ -12,26 +15,44 @@ const SEP: &str = "--";
 const PLACE_HOLDER: &str = "%";
 
 
-pub fn parse(a: Vec<String>) -> AppResult<Parsed> {
+pub fn parse() -> AppResult<AppOption> {
+    let mut target_command: Vec<String> = vec![];
+    let mut signal = libc::SIGTERM;
+
+    {
+        use argparse::{ArgumentParser, Collect, StoreConst};
+        let mut ap = ArgumentParser::new();
+        ap.silence_double_dash(false);
+        ap.refer(&mut signal).add_option(&["--kill", "-k"], StoreConst(libc::SIGKILL), "Use KILL signal");
+        ap.refer(&mut target_command).add_argument("Target/Command", Collect, "Target or command");
+        let args = env::args().collect();
+        ap.parse(args, &mut sink(), &mut sink()).map_err(|_| AppError::InvalidArgument)?;
+    }
+
     fn target(it: &str) -> Target { Target::new(it) }
 
-    let (targets, mut command) = extract_params(a)?;
+    let (targets, mut command_line) = extract_params(target_command)?;
 
     if let Some(first) = targets.first() {
-        for it in command.as_mut_slice().iter_mut() {
+        for it in command_line.as_mut_slice().iter_mut() {
             if *it == PLACE_HOLDER {
                 *it = first.clone()
             }
         }
     }
 
+    let targets: Vec<String> = targets.iter().map(String::as_ref).map(to_absolute_path).collect();
     for it in &targets {
         if !Path::new(it).exists() {
             return Err(AppError::TargetNotFound(it.to_owned()));
         }
     }
 
-    Ok((targets.iter().map(String::as_ref).map(target).collect(), command))
+    Ok(AppOption {
+        command_line,
+        signal,
+        targets: targets.iter().map(String::as_ref).map(target).collect(),
+    })
 }
 
 fn extract_params(a: Vec<String>) -> AppResult<(Vec<String>, Vec<String>)> {
@@ -51,4 +72,9 @@ fn extract_params(a: Vec<String>) -> AppResult<(Vec<String>, Vec<String>)> {
     }
 
     Err(AppError::NotEnoughArguments)
+}
+
+fn to_absolute_path(path: &str) -> String {
+    let buf = PathBuf::from(path);
+    fs::canonicalize(buf).map(|it| it.to_str().unwrap().to_string()).unwrap_or_else(|_| path.to_owned())
 }
