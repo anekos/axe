@@ -14,6 +14,8 @@ pub enum AppError {
     InvalidArgument,
     #[fail(display = "IO Error: {}", 0)]
     Io(std::io::Error),
+    #[fail(display = "Libnotify")]
+    Libnotify,
     #[fail(display = "Not enough arguments")]
     NotEnoughArguments,
     #[fail(display = "Invalid number: {}", 0)]

@@ -10,6 +10,7 @@ chrono = "*"
 deco = "0.2"
 failure = "*"
 libc = "*"
+libnotify = "*"
 patrol = "*"
 
 [dev-dependencies.cargo-husky]

@@ -11,9 +11,12 @@ mod types;
 const USAGE: &str = include_str!("usage.txt");
 
 fn main() {
-    if let Err(err) = app::start() {
-        eprintln!("{}\n", err);
-        eprint!("{}", USAGE);
-        exit(1);
+    match app::start() {
+        Ok(_) | Err(errors::AppError::Libnotify) => (),
+        Err(err) => {
+            eprintln!("{}\n", err);
+            eprint!("{}", USAGE);
+            exit(1);
+        },
     }
 }
