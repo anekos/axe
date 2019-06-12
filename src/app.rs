@@ -33,8 +33,7 @@ pub fn start() -> AppResultU {
     loop {
         if let Some(pid) = (*pid.lock().unwrap()).take() {
             display::killing(pid);
-            unsafe {
-                let mut status = 1;
+            unsafe { let mut status = 1;
                 libc::kill(pid as i32, app_options.signal);
                 libc::waitpid(pid as i32, &mut status, 0);
             };
@@ -96,7 +95,10 @@ fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, syn
             Some(code) =>
                 notify(&format!("[{}] - {}", code, program)),
         },
+        Err(ref err) if err.raw_os_error() == Some(libc::ECHILD) =>
+            (),
         Err(err) =>
-            eprintln!("Failed: {:?}", err),
+            display::error(&format!("Failed: {} {:?} {:?}", err, err.kind(), err.raw_os_error())),
+
     }
 }
