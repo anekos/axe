@@ -34,14 +34,14 @@ pub fn time(t: Duration) {
         } else {
             format!("{} sec", msec as f64 / 1000.0)
         };
-    deprintln!([bold red "{}"] s);
+    deprintln!([bold red "{}" !] s);
 }
 
 
 pub fn error(message: &str) {
-    deprintln!([bold red "{}"] message);
+    deprintln!([bold red "{}" !] message);
 }
 
 pub fn killing(pid: u32) {
-    deprintln!([bold red "Killing {} !"] pid);
+    deprintln!([bold red "Killing {}" !] pid);
 }
