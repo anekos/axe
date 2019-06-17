@@ -6,6 +6,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use libc;
+#[cfg(feature = "notification")]
 use libnotify::{Notification, Urgency};
 use patrol::Target;
 
@@ -17,6 +18,7 @@ use crate::types::*;
 
 
 pub fn start() -> AppResultU {
+    #[cfg(feature = "notification")]
     libnotify::init("axe").map_err(|_| AppError::Libnotify)?;
 
     let app_options = args::parse()?;
@@ -85,10 +87,14 @@ pub fn start() -> AppResultU {
     }
 }
 
+#[cfg(feature = "notification")]
 fn notify(message: &str) {
     let n = Notification::new("axe", Some(message), None);
     n.set_urgency(Urgency::Low);
     let _ = n.show();
+}
+#[cfg(not(feature = "notification"))]
+fn notify(_: &str) {
 }
 
 fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, sync: bool) {

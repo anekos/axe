@@ -4,13 +4,17 @@ version = "0.2.0"
 authors = ["anekos <anekos@snca.net>"]
 edition = "2018"
 
+[features]
+default = []
+notification = ["libnotify"]
+
 [dependencies]
 argparse = "0.2.2"
 chrono = "*"
 deco = "0.2"
 failure = "*"
 libc = "*"
-libnotify = "*"
+libnotify = { version = "*", optional = true }
 
 [dependencies.patrol]
 git = "https://github.com/anekos/patrol.git"
