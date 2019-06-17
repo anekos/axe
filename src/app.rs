@@ -11,7 +11,7 @@ use patrol::Target;
 
 use crate::args;
 use crate::display;
-use crate::errors::{AppError, AppResultU};
+use crate::errors::{AppError, AppResult, AppResultU};
 use crate::types::*;
 
 
@@ -44,7 +44,7 @@ pub fn start() -> AppResultU {
 
         thread::sleep(Duration::from_millis(100));
 
-        let command_line = concrete(&app_options.command_line, changed.take());
+        let command_line = concrete(&app_options.command_line, changed.take(), &app_options.targets)?;
 
         if let Some(command_line) = command_line {
             let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
@@ -109,9 +109,14 @@ fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, syn
     }
 }
 
-fn concrete(cl: &[Part], changed: Option<String>) -> Option<Vec<String>> {
-    cl.iter().map(|it| match it {
+fn concrete(cl: &[Part], changed: Option<String>, targets: &[Target<String>]) -> AppResult<Option<Vec<String>>> {
+    cl.iter().map(|it| Ok(match it {
         Part::Literal(s) => Some(s.to_owned()),
         Part::Changed => changed.clone(),
-    }).collect()
+        Part::Position(index) => if let Some(target) = targets.get(*index - 1) {
+            Some(target.data.clone())
+        } else {
+            return Err(AppError::InvalidPosition(*index))
+        }
+    })).collect()
 }

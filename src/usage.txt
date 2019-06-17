@@ -8,3 +8,10 @@ Options:
 
 Placeholder (%):
   You can use `%` as the same as the changed file in <COMMAND_LINE>.
+
+Placeholder (%1 %2 ..):
+  You can use `%N` as the same as the N-th argument in <COMMAND_LINE>.
+  e.g)
+    axe lib.py app.py -- python3 app.py
+    ↓ lib.py was changed
+    axe lib.py app.py -- python3 %2

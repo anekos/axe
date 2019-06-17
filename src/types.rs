@@ -13,4 +13,5 @@ pub struct AppOption {
 pub enum Part {
     Changed,
     Literal(String),
+    Position(usize),
 }

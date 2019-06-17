@@ -14,6 +14,8 @@ pub type AppResultU = Result<(), AppError>;
 pub enum AppError {
     #[fail(display = "Invalid argument")]
     InvalidArgument,
+    #[fail(display = "Placeholder index is out of range: `%{}`", 0)]
+    InvalidPosition(usize),
     #[fail(display = "IO Error: {}", 0)]
     Io(std::io::Error),
     #[fail(display = "Libnotify")]

@@ -12,7 +12,6 @@ use crate::types::*;
 
 
 const SEP: &str = "--";
-const PLACE_HOLDER: &str = "%";
 
 
 pub fn parse() -> AppResult<AppOption> {
@@ -32,9 +31,21 @@ pub fn parse() -> AppResult<AppOption> {
     }
 
     let (targets, command_line) = split_params(target_command)?;
-    let command_line: Vec<Part> = command_line.into_iter().map(|it| match it.as_ref() {
-        PLACE_HOLDER => Part::Changed,
-        _ => Part::Literal(it),
+    let command_line: Vec<Part> = command_line.into_iter().map(|it| {
+        if it == "%%" {
+            return Part::Literal("%".to_owned())
+        }
+        if it.starts_with('%') {
+            if it.len() == 1 {
+                return Part::Changed;
+            }
+            if let Ok(index) = it[1..].parse() {
+                if 0 < index {
+                    return Part::Position(index)
+                }
+            }
+        }
+        Part::Literal(it)
     }).collect();
 
     let targets = targets.into_iter().map(make_target).collect::<AppResult<Vec<Target<String>>>>()?;
