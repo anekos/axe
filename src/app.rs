@@ -17,6 +17,9 @@ use crate::types::*;
 
 
 
+type Pid = Arc<Mutex<Option<u32>>>;
+
+
 pub fn start() -> AppResultU {
     #[cfg(feature = "notification")]
     libnotify::init("axe").map_err(|_| AppError::Libnotify)?;
@@ -56,7 +59,7 @@ pub fn start() -> AppResultU {
 
             if app_options.sync {
                 match Command::new(program.clone()).args(args.as_slice()).spawn() {
-                    Ok(mut child) => on_exit(child.wait(), t, &program, true),
+                    Ok(mut child) => on_exit(child.wait(), t, &program, None),
                     Err(err) => display::error(&format!("{}", err))
                 }
             } else {
@@ -68,11 +71,8 @@ pub fn start() -> AppResultU {
                                 let mut pid = pid.lock().unwrap();
                                 *pid = Some(child.id());
                             }
-                            on_exit(child.wait(), t, &program, false);
-                            {
-                                let mut pid = pid.lock().unwrap();
-                                *pid = None;
-                            }
+                            on_exit(child.wait(), t, &program, Some(pid.clone()));
+                            let _ = pid.lock().unwrap().take();
                         },
                         Err(err) => display::error(&format!("{}", err))
                     }
@@ -97,11 +97,16 @@ fn notify(message: &str) {
 fn notify(_: &str) {
 }
 
-fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, sync: bool) {
+fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, pid: Option<Pid>) {
     display::time(at_start.elapsed());
     match status {
         Ok(status) => match status.code() {
-            Some(0) | None => if sync {
+            Some(0) | None => {
+                if let Some(pid) = pid {
+                    if pid.lock().unwrap().is_none() {
+                        return;
+                    }
+                }
                 notify(&format!("OK - {}", program));
             },
             Some(code) =>
