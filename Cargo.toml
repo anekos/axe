@@ -11,10 +11,12 @@ deco = "0.2"
 failure = "*"
 libc = "*"
 libnotify = "*"
-patrol = "*"
+
+[dependencies.patrol]
+git = "https://github.com/anekos/patrol.git"
+rev = "0403f724d781cd44ffcde852cadf98b300a80081"
 
 [dev-dependencies.cargo-husky]
 version = "1"
 default-features = false
 features = ["precommit-hook", "run-cargo-test", "run-cargo-clippy"]
-

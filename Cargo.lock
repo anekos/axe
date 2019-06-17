@@ -21,7 +21,7 @@ dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.58 (registry+https://github.com/rust-lang/crates.io-index)",
  "libnotify 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "patrol 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "patrol 0.3.0 (git+https://github.com/anekos/patrol.git?rev=0403f724d781cd44ffcde852cadf98b300a80081)",
 ]
 
 [[package]]
@@ -301,7 +301,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "patrol"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/anekos/patrol.git?rev=0403f724d781cd44ffcde852cadf98b300a80081#0403f724d781cd44ffcde852cadf98b300a80081"
 dependencies = [
  "inotify 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -586,7 +586,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum num-integer 0.1.32 (registry+https://github.com/rust-lang/crates.io-index)" = "fb24d9bfb3f222010df27995441ded1e954f8f69cd35021f6bef02ca9552fb92"
 "checksum num-iter 0.1.32 (registry+https://github.com/rust-lang/crates.io-index)" = "287a1c9969a847055e1122ec0ea7a5c5d6f72aad97934e131c83d5c08ab4e45c"
 "checksum num-traits 0.1.36 (registry+https://github.com/rust-lang/crates.io-index)" = "a16a42856a256b39c6d3484f097f6713e14feacd9bfb02290917904fae46c81c"
-"checksum patrol 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "34ed4dacbeb615a15d564fd07987ba88dfcf8931b4075b74ddf84945422add16"
+"checksum patrol 0.3.0 (git+https://github.com/anekos/patrol.git?rev=0403f724d781cd44ffcde852cadf98b300a80081)" = "<none>"
 "checksum pkg-config 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)" = "676e8eb2b1b4c9043511a9b7bea0915320d7e502b0a079fb03f9635a5252b18c"
 "checksum proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)" = "cf3d2011ab5c909338f7887f4fc896d35932e29146c12c8d01da6b22a80ba759"
 "checksum pulldown-cmark 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "eef52fac62d0ea7b9b4dc7da092aa64ea7ec3d90af6679422d3d7e0e14b6ee15"

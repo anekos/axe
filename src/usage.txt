@@ -6,9 +6,5 @@ Options:
   --sync  Do not use signal when files are updated
   --kill  Use KILL signal instead of TERM
 
-Placeholder:
-  You can use `%` as the same as the first argument in <COMMAND_LINE>.
-  e.g)
-    axe app.py lib.py -- python3 app.py
-    ↓
-    axe app.py lib.py -- python3 %
+Placeholder (%):
+  You can use `%` as the same as the changed file in <COMMAND_LINE>.

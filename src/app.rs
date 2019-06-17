@@ -7,10 +7,12 @@ use std::time::{Duration, Instant};
 
 use libc;
 use libnotify::{Notification, Urgency};
+use patrol::Target;
 
 use crate::args;
 use crate::display;
 use crate::errors::{AppError, AppResultU};
+use crate::types::*;
 
 
 
@@ -19,16 +21,15 @@ pub fn start() -> AppResultU {
 
     let app_options = args::parse()?;
 
-    let (program, args) = app_options.command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
-
     let (tx, rx) = channel();
 
-    let targets = app_options.targets;
+    let targets: Vec<Target<String>> = app_options.targets.to_vec();
     thread::spawn(move || {
-        patrol::start(targets, tx);
+        patrol::start(&targets, &tx);
     });
 
     let pid = Arc::new(Mutex::<Option<u32>>::new(None));
+    let mut changed: Option<String> = None;
 
     loop {
         if let Some(pid) = (*pid.lock().unwrap()).take() {
@@ -43,39 +44,44 @@ pub fn start() -> AppResultU {
 
         thread::sleep(Duration::from_millis(100));
 
-        let (program, args) = (program.to_owned(), args.to_owned());
+        let command_line = concrete(&app_options.command_line, changed.take());
 
-        let t = Instant::now();
+        if let Some(command_line) = command_line {
+            let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
+            let (program, args) = (program.to_owned(), args.to_owned());
 
-        if app_options.sync {
-            match Command::new(program.clone()).args(args.as_slice()).spawn() {
-                Ok(mut child) => on_exit(child.wait(), t, &program, true),
-                Err(err) => display::error(&format!("{}", err))
-            }
-        } else {
-            let pid = pid.clone();
-            thread::spawn(move || {
-                match Command::new(program.clone()).args(args).spawn() {
-                    Ok(mut child) => {
-                        {
-                            let mut pid = pid.lock().unwrap();
-                            *pid = Some(child.id());
-                        }
-                        on_exit(child.wait(), t, &program, false);
-                        {
-                            let mut pid = pid.lock().unwrap();
-                            *pid = None;
-                        }
-                    },
+            let t = Instant::now();
+
+            if app_options.sync {
+                match Command::new(program.clone()).args(args.as_slice()).spawn() {
+                    Ok(mut child) => on_exit(child.wait(), t, &program, true),
                     Err(err) => display::error(&format!("{}", err))
                 }
-            });
+            } else {
+                let pid = pid.clone();
+                thread::spawn(move || {
+                    match Command::new(program.clone()).args(args).spawn() {
+                        Ok(mut child) => {
+                            {
+                                let mut pid = pid.lock().unwrap();
+                                *pid = Some(child.id());
+                            }
+                            on_exit(child.wait(), t, &program, false);
+                            {
+                                let mut pid = pid.lock().unwrap();
+                                *pid = None;
+                            }
+                        },
+                        Err(err) => display::error(&format!("{}", err))
+                    }
+                });
+            }
+
+            while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
+            }
         }
 
-        while rx.recv_timeout(Duration::from_millis(100)).is_ok() {
-        }
-
-        let _ = rx.recv().unwrap();
+        changed = Some(rx.recv().unwrap().data);
     }
 }
 
@@ -101,4 +107,11 @@ fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, syn
             display::error(&format!("Failed: {} {:?} {:?}", err, err.kind(), err.raw_os_error())),
 
     }
+}
+
+fn concrete(cl: &[Part], changed: Option<String>) -> Option<Vec<String>> {
+    cl.iter().map(|it| match it {
+        Part::Literal(s) => Some(s.to_owned()),
+        Part::Changed => changed.clone(),
+    }).collect()
 }

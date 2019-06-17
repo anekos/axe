@@ -1,4 +1,6 @@
 
+use std::path::PathBuf;
+
 use failure::Fail;
 
 
@@ -20,8 +22,8 @@ pub enum AppError {
     NotEnoughArguments,
     #[fail(display = "Invalid number: {}", 0)]
     NumberFormat(std::num::ParseIntError),
-    #[fail(display = "Target not found: {}", 0)]
-    TargetNotFound(String),
+    #[fail(display = "Target not found: {:?}", 0)]
+    TargetNotFound(PathBuf),
 }
 
 
