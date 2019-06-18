@@ -18,13 +18,15 @@ pub fn parse() -> AppResult<AppOption> {
     let mut target_command: Vec<String> = vec![];
     let mut signal = libc::SIGTERM;
     let mut sync = false;
+    let mut stdin: Option<PathBuf> = None;
 
     {
-        use argparse::{ArgumentParser, Collect, StoreConst, StoreTrue};
+        use argparse::{ArgumentParser, Collect, StoreConst, StoreTrue, StoreOption};
         let mut ap = ArgumentParser::new();
         ap.silence_double_dash(false);
         ap.refer(&mut signal).add_option(&["--kill", "-k"], StoreConst(libc::SIGKILL), "Use KILL signal");
         ap.refer(&mut sync).add_option(&["--sync", "-s"], StoreTrue, "Do not use signal");
+        ap.refer(&mut stdin).add_option(&["--stdin", "-i"], StoreOption, "File path for stdin");
         ap.refer(&mut target_command).add_argument("Target/Command", Collect, "Target or command");
         let args = env::args().collect();
         ap.parse(args, &mut sink(), &mut sink()).map_err(|_| AppError::InvalidArgument)?;
@@ -53,6 +55,7 @@ pub fn parse() -> AppResult<AppOption> {
     Ok(AppOption {
         command_line,
         signal,
+        stdin,
         sync,
         targets,
     })

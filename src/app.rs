@@ -1,3 +1,4 @@
+use std::fs::File;
 use std::io;
 use std::process::{Command, ExitStatus};
 use std::sync::mpsc::channel;
@@ -54,18 +55,22 @@ pub fn start() -> AppResultU {
         if let Some(command_line) = command_line {
             let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
             let (program, args) = (program.to_owned(), args.to_owned());
+            let stdin = app_options.stdin.clone();
+            let stdin = stdin.map(|it| File::open(it)).transpose()?;
 
             let t = Instant::now();
 
             if app_options.sync {
-                match Command::new(program.clone()).args(args.as_slice()).spawn() {
+                let mut command = make_command(&program, &args, stdin);
+                match command.spawn() {
                     Ok(mut child) => on_exit(child.wait(), t, &program, None),
                     Err(err) => display::error(&format!("{}", err))
                 }
             } else {
                 let pid = pid.clone();
                 thread::spawn(move || {
-                    match Command::new(program.clone()).args(args).spawn() {
+                    let mut command = make_command(&program, &args, stdin);
+                    match command.spawn() {
                         Ok(mut child) => {
                             {
                                 let mut pid = pid.lock().unwrap();
@@ -130,4 +135,13 @@ fn concrete(cl: &[Part], changed: Option<String>, targets: &[Target<String>]) ->
             return Err(AppError::InvalidPosition(*index))
         }
     })).collect()
+}
+
+fn make_command(program: &str, args: &[String], stdin: Option<File>) -> Command {
+    let mut command = Command::new(program);
+    command.args(args);
+    if let Some(stdin) = stdin {
+        command.stdin(stdin);
+    }
+    command
 }
