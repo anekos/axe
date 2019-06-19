@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io;
 use std::process::{Command, ExitStatus};
 use std::sync::mpsc::channel;
@@ -141,7 +141,12 @@ fn make_command(option: &AppOption, changed: Option<String>) -> AppResult<Option
             command.stdin(stdin);
         }
         if let Some(stdout) = option.stdout.clone() {
-            let stdout = File::open(stdout)?;
+            let mut oo = OpenOptions::new();
+            oo.write(true).create(true);
+            if option.append {
+                oo.append(true);
+            }
+            let stdout = oo.open(stdout)?;
             command.stdout(stdout);
         }
 

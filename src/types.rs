@@ -7,6 +7,7 @@ use patrol::Target;
 
 
 pub struct AppOption {
+    pub append: bool,
     pub command_line: Vec<Part>,
     pub signal: i32,
     pub stdin: Option<PathBuf>,
@@ -26,6 +27,7 @@ pub enum Part {
 impl Default for AppOption {
     fn default() -> Self {
         Self {
+            append: false,
             command_line: vec![],
             signal: libc::SIGTERM,
             stdin: None,
