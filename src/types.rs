@@ -1,4 +1,5 @@
 
+use std::default::Default;
 use std::path::PathBuf;
 
 use patrol::Target;
@@ -17,4 +18,18 @@ pub enum Part {
     Changed,
     Literal(String),
     Position(usize),
+}
+
+
+
+impl Default for AppOption {
+    fn default() -> Self {
+        Self {
+            command_line: vec![],
+            signal: libc::SIGTERM,
+            stdin: None,
+            sync: false,
+            targets: vec![],
+        }
+    }
 }

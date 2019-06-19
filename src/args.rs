@@ -15,25 +15,23 @@ const SEP: &str = "--";
 
 
 pub fn parse() -> AppResult<AppOption> {
+    let mut option = AppOption::default();
     let mut target_command: Vec<String> = vec![];
-    let mut signal = libc::SIGTERM;
-    let mut sync = false;
-    let mut stdin: Option<PathBuf> = None;
 
     {
         use argparse::{ArgumentParser, Collect, StoreConst, StoreTrue, StoreOption};
         let mut ap = ArgumentParser::new();
         ap.silence_double_dash(false);
-        ap.refer(&mut signal).add_option(&["--kill", "-k"], StoreConst(libc::SIGKILL), "Use KILL signal");
-        ap.refer(&mut sync).add_option(&["--sync", "-s"], StoreTrue, "Do not use signal");
-        ap.refer(&mut stdin).add_option(&["--stdin", "-i"], StoreOption, "File path for stdin");
+        ap.refer(&mut option.signal).add_option(&["--kill", "-k"], StoreConst(libc::SIGKILL), "Use KILL signal");
+        ap.refer(&mut option.sync).add_option(&["--sync", "-s"], StoreTrue, "Do not use signal");
+        ap.refer(&mut option.stdin).add_option(&["--stdin", "-i"], StoreOption, "File path for stdin");
         ap.refer(&mut target_command).add_argument("Target/Command", Collect, "Target or command");
         let args = env::args().collect();
         ap.parse(args, &mut sink(), &mut sink()).map_err(|_| AppError::InvalidArgument)?;
     }
 
     let (targets, command_line) = split_params(target_command)?;
-    let command_line: Vec<Part> = command_line.into_iter().map(|it| {
+    option.command_line = command_line.into_iter().map(|it| {
         if it == "%%" {
             return Part::Literal("%".to_owned())
         }
@@ -50,15 +48,9 @@ pub fn parse() -> AppResult<AppOption> {
         Part::Literal(it)
     }).collect();
 
-    let targets = targets.into_iter().map(make_target).collect::<AppResult<Vec<Target<String>>>>()?;
+    option.targets = targets.into_iter().map(make_target).collect::<AppResult<Vec<Target<String>>>>()?;
 
-    Ok(AppOption {
-        command_line,
-        signal,
-        stdin,
-        sync,
-        targets,
-    })
+    Ok(option)
 }
 
 fn split_params(a: Vec<String>) -> AppResult<(Vec<String>, Vec<String>)> {
