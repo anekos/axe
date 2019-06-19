@@ -10,6 +10,7 @@ pub struct AppOption {
     pub command_line: Vec<Part>,
     pub signal: i32,
     pub stdin: Option<PathBuf>,
+    pub stdout: Option<PathBuf>,
     pub sync: bool,
     pub targets: Vec<Target<String>>,
 }
@@ -28,6 +29,7 @@ impl Default for AppOption {
             command_line: vec![],
             signal: libc::SIGTERM,
             stdin: None,
+            stdout: None,
             sync: false,
             targets: vec![],
         }

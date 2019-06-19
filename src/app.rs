@@ -50,18 +50,10 @@ pub fn start() -> AppResultU {
 
         thread::sleep(Duration::from_millis(100));
 
-        let command_line = concrete(&app_options.command_line, changed.take(), &app_options.targets)?;
-
-        if let Some(command_line) = command_line {
-            let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
-            let (program, args) = (program.to_owned(), args.to_owned());
-            let stdin = app_options.stdin.clone();
-            let stdin = stdin.map(File::open).transpose()?;
-
+        if let Some((mut command, program)) = make_command(&app_options, changed.take())? {
             let t = Instant::now();
 
             if app_options.sync {
-                let mut command = make_command(&program, &args, stdin);
                 match command.spawn() {
                     Ok(mut child) => on_exit(child.wait(), t, &program, None),
                     Err(err) => display::error(&format!("{}", err))
@@ -69,7 +61,6 @@ pub fn start() -> AppResultU {
             } else {
                 let pid = pid.clone();
                 thread::spawn(move || {
-                    let mut command = make_command(&program, &args, stdin);
                     match command.spawn() {
                         Ok(mut child) => {
                             {
@@ -137,11 +128,23 @@ fn concrete(cl: &[Part], changed: Option<String>, targets: &[Target<String>]) ->
     })).collect()
 }
 
-fn make_command(program: &str, args: &[String], stdin: Option<File>) -> Command {
-    let mut command = Command::new(program);
-    command.args(args);
-    if let Some(stdin) = stdin {
-        command.stdin(stdin);
-    }
-    command
+fn make_command(option: &AppOption, changed: Option<String>) -> AppResult<Option<(Command, String)>> {
+    concrete(&option.command_line, changed, &option.targets)?.map(|command_line| {
+        let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
+
+        let mut command = Command::new(program);
+
+        command.args(args);
+
+        if let Some(stdin) = option.stdin.clone() {
+            let stdin = File::open(stdin)?;
+            command.stdin(stdin);
+        }
+        if let Some(stdout) = option.stdout.clone() {
+            let stdout = File::open(stdout)?;
+            command.stdout(stdout);
+        }
+
+        Ok((command, program.to_owned()))
+    }).transpose()
 }

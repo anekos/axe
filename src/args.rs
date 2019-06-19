@@ -25,6 +25,7 @@ pub fn parse() -> AppResult<AppOption> {
         ap.refer(&mut option.signal).add_option(&["--kill", "-k"], StoreConst(libc::SIGKILL), "Use KILL signal");
         ap.refer(&mut option.sync).add_option(&["--sync", "-s"], StoreTrue, "Do not use signal");
         ap.refer(&mut option.stdin).add_option(&["--stdin", "-i"], StoreOption, "File path for stdin");
+        ap.refer(&mut option.stdout).add_option(&["--stdout", "-o"], StoreOption, "File path for stdout");
         ap.refer(&mut target_command).add_argument("Target/Command", Collect, "Target or command");
         let args = env::args().collect();
         ap.parse(args, &mut sink(), &mut sink()).map_err(|_| AppError::InvalidArgument)?;
