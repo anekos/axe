@@ -56,7 +56,7 @@ pub fn start() -> AppResultU {
             let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
             let (program, args) = (program.to_owned(), args.to_owned());
             let stdin = app_options.stdin.clone();
-            let stdin = stdin.map(|it| File::open(it)).transpose()?;
+            let stdin = stdin.map(File::open).transpose()?;
 
             let t = Instant::now();
 
