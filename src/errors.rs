@@ -12,6 +12,8 @@ pub type AppResultU = Result<(), AppError>;
 
 #[derive(Fail, Debug)]
 pub enum AppError {
+    #[fail(display = "File path encoding error")]
+    FilepathEncoding,
     #[fail(display = "Invalid argument")]
     InvalidArgument,
     #[fail(display = "Placeholder index is out of range: `%{}`", 0)]

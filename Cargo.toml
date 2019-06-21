@@ -4,6 +4,10 @@ version = "0.2.0"
 authors = ["anekos <anekos@snca.net>"]
 edition = "2018"
 
+[[bin]]
+name = "patrol-test"
+path = "src/main.rs"
+
 [features]
 default = []
 notification = ["libnotify"]
@@ -18,7 +22,7 @@ libnotify = { version = "*", optional = true }
 
 [dependencies.patrol]
 git = "https://github.com/anekos/patrol.git"
-rev = "0403f724d781cd44ffcde852cadf98b300a80081"
+rev = "118b6ed3d6a0a488a885e9153c2c1a41fde955cc"
 
 [dev-dependencies.cargo-husky]
 version = "1"

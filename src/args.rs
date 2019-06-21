@@ -4,7 +4,7 @@ use std::fs;
 use std::io::sink;
 use std::path::PathBuf;
 
-use patrol::Target;
+use patrol::{Target, TargetU};
 
 use crate::errors::{AppError, AppResult};
 use crate::types::*;
@@ -50,7 +50,7 @@ pub fn parse() -> AppResult<AppOption> {
         Part::Literal(it)
     }).collect();
 
-    option.targets = targets.into_iter().map(make_target).collect::<AppResult<Vec<Target<String>>>>()?;
+    option.targets = targets.into_iter().map(make_target).collect::<AppResult<Vec<TargetU>>>()?;
 
     Ok(option)
 }
@@ -74,11 +74,11 @@ fn split_params(a: Vec<String>) -> AppResult<(Vec<String>, Vec<String>)> {
     Err(AppError::NotEnoughArguments)
 }
 
-fn make_target(s: String) -> AppResult<Target<String>> {
+fn make_target(s: String) -> AppResult<TargetU> {
     let path = PathBuf::from(&s);
     let path = fs::canonicalize(path)?;
     if !path.exists() {
         return Err(AppError::TargetNotFound(path.to_owned()));
     }
-    Ok(Target::new(path, s))
+    Ok(Target::new(path, ()))
 }

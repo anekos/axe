@@ -2,7 +2,7 @@
 use std::default::Default;
 use std::path::PathBuf;
 
-use patrol::Target;
+use patrol::TargetU;
 
 
 
@@ -13,7 +13,7 @@ pub struct AppOption {
     pub stdin: Option<PathBuf>,
     pub stdout: Option<PathBuf>,
     pub sync: bool,
-    pub targets: Vec<Target<String>>,
+    pub targets: Vec<TargetU>,
 }
 
 pub enum Part {

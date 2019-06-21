@@ -1,7 +1,7 @@
 use std::fs::{File, OpenOptions};
 use std::io;
+use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
-use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use libc;
 #[cfg(feature = "notification")]
 use libnotify::{Notification, Urgency};
-use patrol::Target;
+use patrol::TargetU;
 
 use crate::args;
 use crate::display;
@@ -27,15 +27,11 @@ pub fn start() -> AppResultU {
 
     let app_options = args::parse()?;
 
-    let (tx, rx) = channel();
-
-    let targets: Vec<Target<String>> = app_options.targets.to_vec();
-    thread::spawn(move || {
-        patrol::start(&targets, &tx);
-    });
+    let targets: Vec<TargetU> = app_options.targets.to_vec();
+    let rx = patrol::spawn(targets);
 
     let pid = Arc::new(Mutex::<Option<u32>>::new(None));
-    let mut changed: Option<String> = None;
+    let mut changed: Option<PathBuf> = None;
 
     loop {
         if let Some(pid) = (*pid.lock().unwrap()).take() {
@@ -79,7 +75,7 @@ pub fn start() -> AppResultU {
             }
         }
 
-        changed = Some(rx.recv().unwrap().data);
+        changed = Some(rx.recv().unwrap().path);
     }
 }
 
@@ -116,19 +112,19 @@ fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, pid
     }
 }
 
-fn concrete(cl: &[Part], changed: Option<String>, targets: &[Target<String>]) -> AppResult<Option<Vec<String>>> {
-    cl.iter().map(|it| Ok(match it {
-        Part::Literal(s) => Some(s.to_owned()),
-        Part::Changed => changed.clone(),
+fn concrete(cl: &[Part], changed: Option<PathBuf>, targets: &[TargetU]) -> AppResult<Option<Vec<String>>> {
+    cl.iter().map(|it| match it {
+        Part::Literal(s) => Ok(Some(s.to_owned())),
+        Part::Changed => changed.as_ref().map(path_to_string).transpose(),
         Part::Position(index) => if let Some(target) = targets.get(*index - 1) {
-            Some(target.data.clone())
+            Some(path_to_string(&target.path)).transpose()
         } else {
-            return Err(AppError::InvalidPosition(*index))
+            Err(AppError::InvalidPosition(*index))
         }
-    })).collect()
+    }).collect()
 }
 
-fn make_command(option: &AppOption, changed: Option<String>) -> AppResult<Option<(Command, String)>> {
+fn make_command(option: &AppOption, changed: Option<PathBuf>) -> AppResult<Option<(Command, String)>> {
     concrete(&option.command_line, changed, &option.targets)?.map(|command_line| {
         let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
 
@@ -152,4 +148,8 @@ fn make_command(option: &AppOption, changed: Option<String>) -> AppResult<Option
 
         Ok((command, program.to_owned()))
     }).transpose()
+}
+
+fn path_to_string<T: AsRef<Path>>(path: &T) -> AppResult<String> {
+    path.as_ref().to_str().ok_or(AppError::FilepathEncoding).map(|it| it.to_string())
 }
