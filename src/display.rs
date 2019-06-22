@@ -5,15 +5,14 @@ use std::time::Duration;
 use chrono::{Local, DateTime};
 use deco::*;
 
+use crate::errors::AppResult;
+
+
 
 pub fn separator() {
     let now: DateTime<Local> = Local::now();
 
-    let cols: usize =
-        String::from_utf8(
-            Command::new("tput").arg("cols").output().unwrap().stdout).unwrap()
-        .trim()
-        .parse().unwrap();
+    let cols: usize = get_cols().unwrap_or(40);
 
     let mut buf = format!("# {} ", now.format("%H:%M:%S"));
 
@@ -44,4 +43,9 @@ pub fn error(message: &str) {
 
 pub fn killing(pid: u32) {
     deprintln!([bold red "Killing {}" !] pid);
+}
+
+fn get_cols() -> AppResult<usize> {
+    let command = Command::new("tput").arg("cols").output()?.stdout;
+    Ok(String::from_utf8(command)?.trim().parse()?)
 }

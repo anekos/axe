@@ -28,6 +28,8 @@ pub enum AppError {
     NumberFormat(std::num::ParseIntError),
     #[fail(display = "Target not found: {:?}", 0)]
     TargetNotFound(PathBuf),
+    #[fail(display = "Invalid UTF-8: {}", 0)]
+    Utf8(std::string::FromUtf8Error),
 }
 
 
@@ -43,3 +45,4 @@ macro_rules! define_error {
 
 define_error!(std::io::Error, Io);
 define_error!(std::num::ParseIntError, NumberFormat);
+define_error!(std::string::FromUtf8Error, Utf8);
