@@ -5,7 +5,7 @@ authors = ["anekos <anekos@snca.net>"]
 edition = "2018"
 
 [[bin]]
-name = "patrol-test"
+name = "axe"
 path = "src/main.rs"
 
 [features]
