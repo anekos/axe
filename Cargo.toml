@@ -22,7 +22,7 @@ libnotify = { version = "*", optional = true }
 
 [dependencies.patrol]
 git = "https://github.com/anekos/patrol.git"
-rev = "118b6ed3d6a0a488a885e9153c2c1a41fde955cc"
+rev = "d76e38dc5e504f2e15ef4e4f5d4f99c7c4bc7122"
 
 [dev-dependencies.cargo-husky]
 version = "1"

@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use libc;
 #[cfg(feature = "notification")]
 use libnotify::{Notification, Urgency};
-use patrol::TargetU;
+use patrol::{Config, Patrol, TargetU};
 
 use crate::args;
 use crate::display;
@@ -28,7 +28,8 @@ pub fn start() -> AppResultU {
     let app_options = args::parse()?;
 
     let targets: Vec<TargetU> = app_options.targets.to_vec();
-    let rx = patrol::spawn(targets);
+    let patrol = Patrol::new(Config { watch_new_directory: true }, targets);
+    let rx = patrol.spawn();
 
     let pid = Arc::new(Mutex::<Option<u32>>::new(None));
     let mut changed: Option<PathBuf> = None;
