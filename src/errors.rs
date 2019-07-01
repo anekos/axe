@@ -22,8 +22,6 @@ pub enum AppError {
     InvalidPosition(usize),
     #[fail(display = "IO Error: {}", 0)]
     Io(std::io::Error),
-    #[fail(display = "Libnotify")]#[cfg_attr(not(feature = "notification"), allow(dead_code))]
-    Libnotify,
     #[fail(display = "Not enough arguments")]
     NotEnoughArguments,
     #[fail(display = "Invalid number: {}", 0)]
