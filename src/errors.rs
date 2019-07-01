@@ -12,6 +12,8 @@ pub type AppResultU = Result<(), AppError>;
 
 #[derive(Fail, Debug)]
 pub enum AppError {
+    #[fail(display = "{}", 0)]
+    Errno(errno::Errno),
     #[fail(display = "File path encoding error")]
     FilepathEncoding,
     #[fail(display = "Invalid argument")]

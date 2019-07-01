@@ -2,7 +2,6 @@ use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
-use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -11,37 +10,22 @@ use libc;
 use libnotify::{Notification, Urgency};
 use patrol::{Config, Patrol, TargetU};
 
-use crate::args;
 use crate::display;
 use crate::errors::{AppError, AppResult, AppResultU};
+use crate::process::Process;
 use crate::types::*;
 
 
 
-type Pid = Arc<Mutex<Option<u32>>>;
-
-
-pub fn start() -> AppResultU {
-    #[cfg(feature = "notification")]
-    libnotify::init("axe").map_err(|_| AppError::Libnotify)?;
-
-    let app_options = args::parse()?;
-
+pub fn start(app_options: AppOption, process: Process) -> AppResultU {
     let targets: Vec<TargetU> = app_options.targets.to_vec();
     let patrol = Patrol::new(Config { watch_new_directory: true }, targets);
     let rx = patrol.spawn();
 
-    let pid = Arc::new(Mutex::<Option<u32>>::new(None));
     let mut changed: Option<PathBuf> = None;
 
     loop {
-        if let Some(pid) = (*pid.lock().unwrap()).take() {
-            display::killing(pid);
-            unsafe { let mut status = 1;
-                libc::kill(pid as i32, app_options.signal);
-                libc::waitpid(pid as i32, &mut status, 0);
-            };
-        }
+        process.terminate()?;
 
         display::separator();
 
@@ -56,16 +40,13 @@ pub fn start() -> AppResultU {
                     Err(err) => display::error(&format!("{}", err))
                 }
             } else {
-                let pid = pid.clone();
+                let process = process.clone();
                 thread::spawn(move || {
                     match command.spawn() {
                         Ok(mut child) => {
-                            {
-                                let mut pid = pid.lock().unwrap();
-                                *pid = Some(child.id());
-                            }
-                            on_exit(child.wait(), t, &program, Some(pid.clone()));
-                            let _ = pid.lock().unwrap().take();
+                            process.set(child.id());
+                            on_exit(child.wait(), t, &program, Some(&process));
+                            process.release();
                         },
                         Err(err) => display::error(&format!("{}", err))
                     }
@@ -90,13 +71,13 @@ fn notify(message: &str) {
 fn notify(_: &str) {
 }
 
-fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, pid: Option<Pid>) {
+fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, process: Option<&Process>) {
     display::time(at_start.elapsed());
     match status {
         Ok(status) => match status.code() {
             Some(0) | None => {
-                if let Some(pid) = pid {
-                    if pid.lock().unwrap().is_none() {
+                if let Some(process) = process {
+                    if process.is_empty() {
                         return;
                     }
                 }
@@ -127,11 +108,11 @@ fn concrete(cl: &[Part], changed: Option<PathBuf>, targets: &[TargetU]) -> AppRe
 
 fn make_command(option: &AppOption, changed: Option<PathBuf>) -> AppResult<Option<(Command, String)>> {
     concrete(&option.command_line, changed, &option.targets)?.map(|command_line| {
-        let (program, args) = command_line.split_first().ok_or(AppError::NotEnoughArguments)?;
+        let program = command_line.first().ok_or(AppError::NotEnoughArguments)?;
 
-        let mut command = Command::new(program);
+        let mut command = Command::new("setsid");
 
-        command.args(args);
+        command.args(&command_line);
 
         if let Some(stdin) = option.stdin.clone() {
             let stdin = File::open(stdin)?;

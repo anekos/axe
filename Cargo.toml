@@ -16,9 +16,13 @@ notification = ["libnotify"]
 argparse = "0.2.2"
 chrono = "*"
 deco = "0.2"
+enclose = "*"
+errno = "*"
 failure = "*"
+if-let-return = "*"
 libc = "*"
 libnotify = { version = "*", optional = true }
+signal-hook = "*"
 
 [dependencies.patrol]
 git = "https://github.com/anekos/patrol.git"
