@@ -72,7 +72,6 @@ fn notify(_: &str) {
 }
 
 fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, process: Option<&Process>) {
-    display::time(at_start.elapsed());
     match status {
         Ok(status) => match status.code() {
             Some(0) | None => {
@@ -83,8 +82,10 @@ fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, pro
                 }
                 notify(&format!("OK - {}", program));
             },
-            Some(code) =>
-                notify(&format!("[{}] - {}", code, program)),
+            Some(code) => {
+                display::status_code(code);
+                notify(&format!("[{}] - {}", code, program));
+            }
         },
         Err(ref err) if err.raw_os_error() == Some(libc::ECHILD) =>
             (),
@@ -92,6 +93,7 @@ fn on_exit(status: io::Result<ExitStatus>, at_start: Instant, program: &str, pro
             display::error(&format!("Failed: {} {:?} {:?}", err, err.kind(), err.raw_os_error())),
 
     }
+    display::time(at_start.elapsed());
 }
 
 fn concrete(cl: &[Part], changed: Option<PathBuf>, targets: &[TargetU]) -> AppResult<Option<Vec<String>>> {

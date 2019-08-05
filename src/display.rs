@@ -33,7 +33,7 @@ pub fn time(t: Duration) {
         } else {
             format!("{} sec", msec as f64 / 1000.0)
         };
-    deprintln!([bold red "{}" !] s);
+    deprintln!([bold yellow "{}" !] s);
 }
 
 
@@ -48,4 +48,8 @@ pub fn killing(pid: u32) {
 fn get_cols() -> AppResult<usize> {
     let command = Command::new("tput").arg("cols").output()?.stdout;
     Ok(String::from_utf8(command)?.trim().parse()?)
+}
+
+pub fn status_code(code: i32) {
+    deprintln!([bold red "Code: {}" !] code);
 }
