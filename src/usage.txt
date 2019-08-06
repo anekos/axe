@@ -3,8 +3,11 @@ Usage: axe [<OPTIONS] <WATCH_TARGET> ... "--" <COMMAND_LINE> ...
        axe [<OPTIONS] <WATCH_TARGET_AND_COMMAND>
 
 Options:
-  --sync  Do not use signal when files are updated
-  --kill  Use KILL signal instead of TERM
+  --sync          do not send any signals when files are updated.
+  --kill          use KILL signal instead of TERM.
+  --stdin <FILE>  attache the <FILE> to the command as stdin.
+  --stdout <FILE> write the output of the command to this <FILE>.
+  --append        open in append mode for `--stdout`.
 
 Placeholder (%):
   You can use `%` as the same as the changed file in <COMMAND_LINE>.
