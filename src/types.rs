@@ -9,6 +9,7 @@ use patrol::TargetU;
 pub struct AppOption {
     pub append: bool,
     pub command_line: Vec<Part>,
+    pub delay: Option<u64>,
     pub signal: i32,
     pub stdin: Option<PathBuf>,
     pub stdout: Option<PathBuf>,
@@ -29,6 +30,7 @@ impl Default for AppOption {
         Self {
             append: false,
             command_line: vec![],
+            delay: None,
             signal: libc::SIGTERM,
             stdin: None,
             stdout: None,

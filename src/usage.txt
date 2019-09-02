@@ -8,6 +8,7 @@ Options:
   --stdin <FILE>  attache the <FILE> to the command as stdin.
   --stdout <FILE> write the output of the command to this <FILE>.
   --append        open in append mode for `--stdout`.
+  --delay <MSEC>  wait for <MSEC> before run the command.
 
 Placeholder (%):
   You can use `%` as the same as the changed file in <COMMAND_LINE>.

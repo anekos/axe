@@ -27,6 +27,7 @@ pub fn parse() -> AppResult<AppOption> {
         ap.refer(&mut option.stdin).add_option(&["--stdin", "-i"], StoreOption, "File path for stdin");
         ap.refer(&mut option.stdout).add_option(&["--stdout", "-o"], StoreOption, "File path for stdout");
         ap.refer(&mut option.append).add_option(&["--append", "-a"], StoreTrue, "`--stdout` with append mode");
+        ap.refer(&mut option.delay).add_option(&["--delay", "-d"], StoreOption, "Delay time (msec) before run");
         ap.refer(&mut target_command).add_argument("Target/Command", Collect, "Target or command");
         let args = env::args().collect();
         ap.parse(args, &mut sink(), &mut sink()).map_err(|_| AppError::InvalidArgument)?;

@@ -37,6 +37,10 @@ pub fn time(t: Duration) {
 }
 
 
+pub fn delay(t: u64) {
+    deprintln!([green "Waiting for {} msec" !] t);
+}
+
 pub fn error(message: &str) {
     deprintln!([bold red "{}" !] message);
 }

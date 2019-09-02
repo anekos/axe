@@ -32,6 +32,11 @@ pub fn start(app_options: AppOption, process: Process) -> AppResultU {
         thread::sleep(Duration::from_millis(100));
 
         if let Some((mut command, program)) = make_command(&app_options, changed.take())? {
+            if let Some(delay) = app_options.delay {
+                display::delay(delay);
+                thread::sleep(Duration::from_millis(delay));
+            }
+
             let t = Instant::now();
 
             if app_options.sync {
