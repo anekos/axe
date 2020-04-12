@@ -3,6 +3,7 @@ name = "axe"
 version = "0.2.0"
 authors = ["anekos <anekos@snca.net>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
 
 [[bin]]
 name = "axe"
