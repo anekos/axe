@@ -1,7 +1,6 @@
 
 use std::sync::{Arc, Mutex};
 
-use errno;
 use if_let_return::*;
 
 use crate::display;

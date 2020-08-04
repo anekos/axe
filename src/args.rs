@@ -80,7 +80,7 @@ fn make_target(s: String) -> AppResult<TargetU> {
     let path = PathBuf::from(&s);
     let path = fs::canonicalize(path)?;
     if !path.exists() {
-        return Err(AppError::TargetNotFound(path.to_owned()));
+        return Err(AppError::TargetNotFound(path));
     }
     Ok(Target::new(path, ()))
 }

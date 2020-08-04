@@ -5,7 +5,6 @@ use std::process::{Command, ExitStatus};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use libc;
 #[cfg(feature = "notification")]
 use libnotify::{Notification, Urgency};
 use patrol::{Config, Patrol, TargetU};
