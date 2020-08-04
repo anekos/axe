@@ -119,7 +119,17 @@ fn make_command(option: &AppOption, changed: Option<PathBuf>) -> AppResult<Optio
 
         let mut command = Command::new("setsid");
 
+        let mut envs = vec![];
+        for kv in &option.env {
+            if let Some(at) = kv.find('=') {
+                envs.push((&kv[0 .. at], &kv[at + 1 .. ]));
+            } else {
+                envs.push((&kv, ""));
+            }
+        }
+
         command.args(&command_line);
+        command.envs(envs);
 
         if let Some(stdin) = option.stdin.clone() {
             let stdin = File::open(stdin)?;
