@@ -23,7 +23,7 @@ failure = "*"
 if-let-return = "*"
 libc = "*"
 libnotify = { version = "*", optional = true }
-signal-hook = "*"
+signal-hook = "0.1"
 
 [dependencies.patrol]
 git = "https://github.com/anekos/patrol.git"
