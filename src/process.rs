@@ -44,7 +44,7 @@ impl Process {
             if err != 0 {
                 return Err(AppError::Errno(errno::errno()));
             }
-            libc::waitpid(pid as i32, &mut status, 0);
+            libc::waitpid(pid, &mut status, 0);
         }
 
         Ok(())

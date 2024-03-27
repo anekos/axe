@@ -29,7 +29,7 @@ fn main() {
 
     let app_options = wrap(args::parse());
 
-    let signals = Signals::new(&[SIGTERM, SIGQUIT, SIGINT]).unwrap();
+    let signals = Signals::new([SIGTERM, SIGQUIT, SIGINT]).unwrap();
     let process = Process::new(app_options.signal);
 
     thread::spawn(enclose!((process) move || wrap(app::start(app_options, process))));

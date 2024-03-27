@@ -39,11 +39,11 @@ pub fn parse() -> AppResult<AppOption> {
         if it == "%%" {
             return Part::Literal("%".to_owned())
         }
-        if it.starts_with('%') {
-            if it.len() == 1 {
+        if let Some(stripped) = it.strip_prefix('%') {
+            if stripped.is_empty() {
                 return Part::Changed;
             }
-            if let Ok(index) = it[1..].parse() {
+            if let Ok(index) = stripped.parse() {
                 if 0 < index {
                     return Part::Position(index)
                 }
